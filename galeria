@@ -1,0 +1,140 @@
+import React, { useState, useRef } from 'react';
+
+const BrickGallery = () => {
+  const [images, setImages] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Función para seleccionar archivos
+  const selectFiles = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Manejar la selección de archivos
+  const onFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    handleFiles(files);
+  };
+
+  // Manejar archivos (seleccionados o arrastrados)
+  const handleFiles = (files: FileList) => {
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    
+    for (let i = 0; i < files.length; i++) {
+      if (validImageTypes.includes(files[i].type)) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImages(prev => [...prev, e.target?.result as string]);
+        };
+        reader.readAsDataURL(files[i]);
+      }
+    }
+  };
+
+  // Manejar eventos de drag and drop
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    handleFiles(files);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
+          Galería de Fotos Comunitaria
+        </h1>
+        <p className="text-center text-gray-600 mb-8">
+          Comparte tus fotos con la comunidad. Arrastra y suelta imágenes o haz clic para seleccionarlas.
+        </p>
+
+        {/* Área de carga */}
+        <div 
+          className={`relative border-2 border-dashed rounded-lg p-8 text-center mb-8 transition-colors ${
+            isDragging 
+              ? 'border-blue-500 bg-blue-50' 
+              : 'border-gray-300 bg-white hover:border-gray-400'
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={selectFiles}
+        >
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <svg 
+              className="w-12 h-12 text-gray-400" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
+              />
+            </svg>
+            <div>
+              <p className="text-lg font-medium text-gray-700">
+                Arrastra tus fotos aquí o haz clic para seleccionar
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Formatos soportados: JPG, PNG, GIF, WEBP
+              </p>
+            </div>
+          </div>
+          <input 
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={onFileSelect}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+        </div>
+
+        {/* Galería de imágenes */}
+        {images.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {images.map((image, index) => (
+              <div key={index} className="break-inside-avoid">
+                <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-105">
+                  <img 
+                    src={image} 
+                    alt={`Foto compartida por un miembro de la comunidad mostrando un momento especial capturado`}
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {images.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500 italic">
+              Aún no hay fotos en la galería. ¡Sé el primero en compartir!
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default BrickGallery;
